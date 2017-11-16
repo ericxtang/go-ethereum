@@ -54,8 +54,8 @@ services:
     build: .
     image: {{.Network}}/{{.Type}}
     ports:
-      - "8545:8545"
-      - "8546:8546"
+{{if .RPC}}      - "8545:8545"{{end}}
+{{if .WS}}      - "8546:8546"{{end}}
       - "{{.FullPort}}:{{.FullPort}}"
       - "{{.FullPort}}:{{.FullPort}}/udp"{{if .Light}}
       - "{{.LightPort}}:{{.LightPort}}/udp"{{end}}

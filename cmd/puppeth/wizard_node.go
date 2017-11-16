@@ -135,6 +135,16 @@ func (w *wizard) deployNode(boot bool) {
 				}
 			}
 		}
+		//Expose RPC?
+		fmt.Println()
+		fmt.Println("Want to expose RPC or Websocket? (r/w/n)")
+		rwanswer := w.readDefaultString("n")
+		if rwanswer == "r" {
+			infos.rpc = true
+		} else if rwanswer == "w" {
+			infos.ws = true
+		}
+
 		// Establish the gas dynamics to be enforced by the signer
 		fmt.Println()
 		fmt.Printf("What gas limit should empty blocks target (MGas)? (default = %0.3f)\n", infos.gasTarget)

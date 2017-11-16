@@ -40,7 +40,7 @@ ADD genesis.json /genesis.json
 RUN \
   echo 'geth init /genesis.json' > geth.sh && \{{if .Unlock}}
 	echo 'mkdir -p /root/.ethereum/keystore/ && cp /signer.json /root/.ethereum/keystore/' >> geth.sh && \{{end}}
-	echo $'geth --networkid {{.NetworkID}} --cache 512 --port {{.Port}} --maxpeers {{.Peers}} {{.LightFlag}} --ethstats \'{{.Ethstats}}\' {{if .BootV4}}--bootnodesv4 {{.BootV4}}{{end}} {{if .BootV5}}--bootnodesv5 {{.BootV5}}{{end}} {{if .Etherbase}}--etherbase {{.Etherbase}} --mine{{end}}{{if .Unlock}}--unlock 0 --password /signer.pass --mine{{end}} --targetgaslimit {{.GasTarget}} --gasprice {{.GasPrice}}' >> geth.sh
+	echo $'geth --networkid {{.NetworkID}} --cache 512 --port {{.Port}} --maxpeers {{.Peers}} {{.LightFlag}} --ethstats \'{{.Ethstats}}\' {{if .RPC}} --rpc --rpcaddr 0.0.0.0 --rpcapi \'personal,account,eth,web3,net\' --rpccorsdomain \'*\' {{end}} {{if .WS}} --ws --wsapi \'personal,account,eth,web3,net\' --wsorigins \'*\' --wsaddr \'0.0.0.0\' --rpccorsdomain \'*\' {{end}} {{if .BootV4}}--bootnodesv4 {{.BootV4}}{{end}} {{if .BootV5}}--bootnodesv5 {{.BootV5}}{{end}} {{if .Etherbase}}--etherbase {{.Etherbase}} --mine{{end}}{{if .Unlock}}--unlock 0 --password /signer.pass --mine{{end}} --targetgaslimit {{.GasTarget}} --gasprice {{.GasPrice}}' >> geth.sh
 
 ENTRYPOINT ["/bin/sh", "geth.sh"]
 `
@@ -54,6 +54,8 @@ services:
     build: .
     image: {{.Network}}/{{.Type}}
     ports:
+      - "8545:8545"
+      - "8546:8546"
       - "{{.FullPort}}:{{.FullPort}}"
       - "{{.FullPort}}:{{.FullPort}}/udp"{{if .Light}}
       - "{{.LightPort}}:{{.LightPort}}/udp"{{end}}
@@ -103,6 +105,8 @@ func deployNode(client *sshClient, network string, bootv4, bootv5 []string, conf
 		"BootV4":    strings.Join(bootv4, ","),
 		"BootV5":    strings.Join(bootv5, ","),
 		"Ethstats":  config.ethstats,
+		"RPC":       config.rpc,
+		"WS":        config.ws,
 		"Etherbase": config.etherbase,
 		"GasTarget": uint64(1000000 * config.gasTarget),
 		"GasPrice":  uint64(1000000000 * config.gasPrice),
@@ -121,6 +125,8 @@ func deployNode(client *sshClient, network string, bootv4, bootv5 []string, conf
 		"LightPort":  config.portFull + 1,
 		"LightPeers": config.peersLight,
 		"Ethstats":   config.ethstats[:strings.Index(config.ethstats, ":")],
+		"RPC":        config.rpc,
+		"WS":         config.ws,
 		"Etherbase":  config.etherbase,
 		"GasTarget":  config.gasTarget,
 		"GasPrice":   config.gasPrice,
@@ -162,6 +168,8 @@ type nodeInfos struct {
 	keyPass    string
 	gasTarget  float64
 	gasPrice   float64
+	rpc        bool
+	ws         bool
 }
 
 // String implements the stringer interface.
